@@ -2,4 +2,4 @@
 set -euo pipefail
 cd "$(dirname "$0")/../hex"
 make
-./hex | head -n 60
+./hex | head -n 100
