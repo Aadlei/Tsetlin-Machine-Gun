@@ -51,7 +51,7 @@ void hg_init(struct hex_game *hg)
 			} else {
 				hg->connected[(i*(BOARD_DIM + 2) + j) * 2] = 0;
 			}
-			
+
 			if (j == 0) {
 				hg->connected[(i*(BOARD_DIM + 2) + j) * 2 + 1] = 1;
 			} else {
@@ -62,7 +62,7 @@ void hg_init(struct hex_game *hg)
 	hg->number_of_open_positions = BOARD_DIM*BOARD_DIM;
 }
 
-int hg_connect(struct hex_game *hg, int player, int position) 
+int hg_connect(struct hex_game *hg, int player, int position)
 {
 	hg->connected[position*2 + player] = 1;
 
@@ -143,18 +143,36 @@ void hg_print(struct hex_game *hg)
 	}
 }
 
-int main() {
-	struct hex_game hg;
+void hg_print_game_data(struct hex_game *hg, int winner)
+{
+	printf("GAME_START\n");
+	int num_moves = BOARD_DIM*BOARD_DIM - hg->number_of_open_positions;
+	for (int i = 0; i < num_moves; ++i) {
+		int player = i % 2;
+		printf("MOVE %d %d\n", hg->moves[i], player);
+	}
+	printf("WINNER %d\n", winner);
+	printf("GAME_END\n");
+}
 
+
+int main(int argc, char *argv[]) {
+	struct hex_game hg;
 	int winner = -1;
 
-	for (int game = 0; game < 10000000; ++game) {
+	// Get number of games from command line argument, default to 1
+	int num_games = 1;
+	if (argc > 1) {
+		num_games = atoi(argv[1]);
+	}
+
+	for (int game = 0; game < num_games; ++game) {
 		hg_init(&hg);
 
 		int player = 0;
 		while (!hg_full_board(&hg)) {
 			int position = hg_place_piece_randomly(&hg, player);
-			
+
 			if (hg_winner(&hg, player, position)) {
 				winner = player;
 				break;
@@ -163,9 +181,9 @@ int main() {
 			player = 1 - player;
 		}
 
-		if (hg.number_of_open_positions >= 75) {
-			printf("\nPlayer %d wins!\n\n", winner);
-			hg_print(&hg);
-		}
+		// Print game data for ALL games we generate
+		hg_print_game_data(&hg, winner);
 	}
+
+	return 0;
 }
