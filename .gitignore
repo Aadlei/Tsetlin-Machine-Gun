@@ -1,3 +1,18 @@
+# Binaries
 hex/hex
+__pycache__/
 
-GraphTsetlinMachineProject.pptx
+# Data
+runs/
+*.csv
+*.pkl
+
+# Visualizations and Results
+*.png
+experiments_results.json
+
+# Tsetlin Machine specific
+TsetlinMachine/
+
+# Virtual Env
+.venv/
