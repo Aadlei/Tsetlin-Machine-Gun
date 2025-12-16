@@ -1,4 +1,5 @@
 import os
+import pickle
 import subprocess
 import time
 import argparse
@@ -207,6 +208,14 @@ def run_experiment(args):
             cm = confusion_matrix(Y_test, preds)
             
             print(f"FINAL Test Accuracy: {acc*100:.2f}%")
+            
+            # Save Model
+            if not os.path.exists("models"):
+                os.makedirs("models")
+            model_path = f"models/hex_gtm_{args.dim}x{args.dim}_offset{offset}.pkl"
+            with open(model_path, "wb") as f:
+                pickle.dump(tm, f)
+            print(f"Saved model to {model_path}")
             
             results.append({
                 "offset": offset,
