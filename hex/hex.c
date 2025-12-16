@@ -20,6 +20,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
 #ifndef BOARD_DIM
     #define BOARD_DIM 11
@@ -136,22 +138,54 @@ void hg_print(struct hex_game *hg)
 			} else if (hg->board[((i+1)*(BOARD_DIM+2) + j + 1)*2 + 1] == 1) {
 				printf(" O");
 			} else {
-				printf(" ·");
+				printf(" Â·");
 			}
 		}
 		printf("\n");
 	}
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+	int games = 1;
+	int seed = -1;
+	int verbose = 0;
+	char *dump_moves_path = NULL;
+
+	for (int i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "--games") == 0 && i + 1 < argc) {
+			games = atoi(argv[++i]);
+		} else if (strcmp(argv[i], "--seed") == 0 && i + 1 < argc) {
+			seed = atoi(argv[++i]);
+		} else if (strcmp(argv[i], "--verbose") == 0) {
+			verbose = 1;
+		} else if (strcmp(argv[i], "--dump-moves") == 0 && i + 1 < argc) {
+			dump_moves_path = argv[++i];
+		}
+	}
+
+	if (seed == -1) {
+		seed = time(NULL);
+	}
+
+	FILE *csv_file = NULL;
+	if (dump_moves_path) {
+		csv_file = fopen(dump_moves_path, "w");
+		if (!csv_file) {
+			fprintf(stderr, "Error: Could not open %s for writing\n", dump_moves_path);
+			return 1;
+		}
+		fprintf(csv_file, "game_id,move_idx,player,row,col,position,winner\n");
+	}
+
 	struct hex_game hg;
 
-	int winner = -1;
-
-	for (int game = 0; game < 10000000; ++game) {
+	for (int game = 0; game < games; ++game) {
+		srand(seed + game);
 		hg_init(&hg);
 
 		int player = 0;
+		int winner = -1;
+
 		while (!hg_full_board(&hg)) {
 			int position = hg_place_piece_randomly(&hg, player);
 			
@@ -163,9 +197,28 @@ int main() {
 			player = 1 - player;
 		}
 
-		if (hg.number_of_open_positions >= 75) {
-			printf("\nPlayer %d wins!\n\n", winner);
+		if (verbose) {
+			printf("\nGame %d: Player %d wins!\n\n", game, winner);
 			hg_print(&hg);
 		}
+
+		if (csv_file) {
+			int total_moves = BOARD_DIM * BOARD_DIM - hg.number_of_open_positions;
+			int current_player = 0;
+			for (int i = 0; i < total_moves; ++i) {
+				int pos = hg.moves[i];
+				int row = pos / (BOARD_DIM + 2) - 1;
+				int col = pos % (BOARD_DIM + 2) - 1;
+				fprintf(csv_file, "%d,%d,%d,%d,%d,%d,%d\n", 
+						game, i, current_player, row, col, pos, winner);
+				current_player = 1 - current_player;
+			}
+		}
 	}
+
+	if (csv_file) {
+		fclose(csv_file);
+	}
+
+	return 0;
 }
